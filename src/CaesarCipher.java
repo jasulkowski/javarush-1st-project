@@ -40,11 +40,16 @@ public class CaesarCipher {
     }
 
     public String encrypt(String text, int key){
-        String result = "";
+        StringBuilder builder = new StringBuilder();
+
         for(int i = 0; i < text.length(); i++){
-            result += encryptChar(text.charAt(i), key);
+            builder.append(encryptChar(text.charAt(i), key));
         }
 
-        return  result;
+        return builder.toString();
+    }
+
+    public String decrypt(String text, int key) {
+        return encrypt(text, -key);
     }
 }
