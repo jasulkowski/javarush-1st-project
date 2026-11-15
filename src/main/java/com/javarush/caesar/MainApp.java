@@ -4,6 +4,7 @@ import com.javarush.caesar.core.Alphabet;
 import com.javarush.caesar.core.CaesarCipher;
 import com.javarush.caesar.service.FileManager;
 import com.javarush.caesar.service.Validator;
+import com.javarush.caesar.core.BruteForce;
 import java.util.Scanner;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ public class MainApp {
 
     private final CaesarCipher cipher = new CaesarCipher(Alphabet.  getSymbols());
     private final FileManager fileManager = new FileManager();
+    private final BruteForce bruteForce = new BruteForce(cipher);
     private final Validator validator = new Validator();
     public static void main(String[] args) {
         new MainApp().run();
@@ -19,8 +21,8 @@ public class MainApp {
 
 
     private void run() {
-        Scanner scanner = new Scanner(System.in);
 
+        Scanner scanner = new Scanner(System.in);
         boolean running = true;
 
         while (running) {
@@ -36,10 +38,7 @@ public class MainApp {
             switch (choice) {
                 case "1" -> processFile(scanner, true);
                 case "2" -> processFile(scanner, false);
-
-                case "3" ->
-                        System.out.println("Brute Force добавим позже");
-
+                case "3" -> bruteForceFile(scanner);
                 case "0" -> running = false;
 
                 default ->
@@ -96,5 +95,41 @@ public class MainApp {
             System.err.println("Ошибка при работе с файлом: " + e.getMessage());
         }
     }
+
+
+    private void bruteForceFile(Scanner scanner) {
+        try {
+            System.out.print("Введите путь к зашифрованному файлу: ");
+            String inputPath = scanner.nextLine().trim();
+
+            System.out.print("Введите путь для сохранения результата: ");
+            String outputPath = scanner.nextLine().trim();
+
+            if (!validator.isValidInputFile(inputPath)) {
+                throw new IllegalArgumentException("Файл не существует или недоступен для чтения");
+            }
+
+            if (!validator.isValidOutputFile(inputPath, outputPath)) {
+                throw new IllegalArgumentException("Входной и выходной файлы не должны совпадать");
+            }
+
+            String encryptedText = fileManager.readFile(inputPath);
+            int foundKey = bruteForce.findKey(encryptedText);
+
+            System.out.println("Наиболее вероятный ключ: " + foundKey);
+
+            String decryptedText = cipher.decrypt(encryptedText, foundKey);
+            String savedPath = fileManager.writeFile(outputPath, decryptedText);
+
+            System.out.println("Файл успешно расшифрован: " + savedPath);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("Ошибка ввода: " + e.getMessage());
+
+        } catch (IOException e) {
+            System.err.println("Ошибка при работе с файлом: " + e.getMessage());
+        }
+    }
+
 
 }
