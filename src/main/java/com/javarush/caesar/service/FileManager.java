@@ -1,3 +1,5 @@
+package com.javarush.caesar.service;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,9 +17,10 @@ public class FileManager {
         return Files.readString(path);
     }
 
-    public void writeFile(String filePath, String content) throws IOException {
+    public String writeFile(String filePath, String content) throws IOException {
        Path path = Path.of(filePath);
-       Files.writeString(path, content);
+        String savedPath = String.valueOf(Files.writeString(path, content));
+       return savedPath;
     }
 
 

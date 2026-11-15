@@ -1,3 +1,5 @@
+package com.javarush.caesar.core;
+
 public class CaesarCipher {
     char[][] alphabet = {
             {'А', 'а'}, {'Б', 'б'}, {'В', 'в'}, {'Г', 'г'}, {'Д', 'д'},

@@ -1,3 +1,8 @@
+package com.javarush.caesar;
+
+import com.javarush.caesar.core.CaesarCipher;
+import com.javarush.caesar.service.FileManager;
+
 import java.io.IOException;
 
 public class Main {
@@ -12,8 +17,8 @@ public class Main {
             String originalText = file.readFile(inputPath);
             String encryptedText = cipher.encrypt(originalText, key);
 
-            file.writeFile(outputPath, encryptedText);
-            System.out.println("Файл успешно зашифрован!");
+            String savedPath = file.writeFile(outputPath, encryptedText);
+            System.out.println("Файл успешно зашифрован: " + savedPath);
 
         } catch (IOException e) {
             System.err.println("Ошибка при работе с файлом!");

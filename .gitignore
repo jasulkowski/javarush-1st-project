@@ -32,3 +32,4 @@ bin/
 *.iml
 /out/
 /output.txt
+/target/
