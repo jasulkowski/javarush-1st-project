@@ -1,57 +1,95 @@
+
 package com.javarush.caesar.core;
 
 public class CaesarCipher {
-    char[][] alphabet = {
-            {'А', 'а'}, {'Б', 'б'}, {'В', 'в'}, {'Г', 'г'}, {'Д', 'д'},
-            {'Е', 'е'}, {'Ё', 'ё'}, {'Ж', 'ж'}, {'З', 'з'}, {'И', 'и'},
-            {'Й', 'й'}, {'К', 'к'}, {'Л', 'л'}, {'М', 'м'}, {'Н', 'н'},
-            {'О', 'о'}, {'П', 'п'}, {'Р', 'р'}, {'С', 'с'}, {'Т', 'т'},
-            {'У', 'у'}, {'Ф', 'ф'}, {'Х', 'х'}, {'Ц', 'ц'}, {'Ч', 'ч'},
-            {'Ш', 'ш'}, {'Щ', 'щ'}, {'Ъ', 'ъ'}, {'Ы', 'ы'}, {'Ь', 'ь'},
-            {'Э', 'э'}, {'Ю', 'ю'}, {'Я', 'я'}
-    };
 
-    public char encryptChar(char letter, int key) {
-        int foundIndex = -1;
-        int caseIndex = 0;
+    private static final int RUSSIAN_LETTERS_COUNT = 33;
+    private static final int ALPHABET_SIZE = 43;
 
-        for (int i = 0; i < alphabet.length; i++) {
-            if (alphabet[i][0] == letter) {
-                foundIndex = i;
-                caseIndex = 0;
-                break;
-            }
+    private final char[] alphabet;
 
-            if (alphabet[i][1] == letter) {
-                foundIndex = i;
-                caseIndex = 1;
-                break;
-            }
+    public CaesarCipher(char[] alphabet) {
+        if (alphabet == null || alphabet.length != ALPHABET_SIZE) {
+            throw new IllegalArgumentException(
+                    "Алфавит должен содержать 43 символа"
+            );
         }
 
-        if (foundIndex != -1) {
-            int newIndex = (foundIndex + key) % alphabet.length;
+        this.alphabet = alphabet.clone();
 
-            if (newIndex < 0) {
-                newIndex += alphabet.length;
+        for (int i = 0; i < this.alphabet.length; i++) {
+            for (int j = 0; j < i; j++) {
+                if (this.alphabet[i] == this.alphabet[j]) {
+                    throw new IllegalArgumentException(
+                            "Алфавит содержит повторяющиеся символы"
+                    );
+                }
             }
-            letter = alphabet[newIndex][caseIndex];
         }
-
-        return letter;
     }
 
-    public String encrypt(String text, int key){
-        StringBuilder builder = new StringBuilder();
+    public char encryptChar(char symbol, int key) {
+        return shiftChar(symbol, key);
+    }
 
-        for(int i = 0; i < text.length(); i++){
-            builder.append(encryptChar(text.charAt(i), key));
-        }
-
-        return builder.toString();
+    public String encrypt(String text, int key) {
+        return shift(text, key);
     }
 
     public String decrypt(String text, int key) {
-        return encrypt(text, -key);
+        return shift(text, -(long) key);
+    }
+
+    private String shift(String text, long key) {
+        if (text == null) {
+            throw new IllegalArgumentException(
+                    "Текст не должен быть null"
+            );
+        }
+
+        StringBuilder result = new StringBuilder(text.length());
+
+        for (int i = 0; i < text.length(); i++) {
+            char symbol = text.charAt(i);
+            result.append(shiftChar(symbol, key));
+        }
+
+        return result.toString();
+    }
+
+    private char shiftChar(char symbol, long key) {
+
+        if (Character.isUpperCase(symbol)) {
+
+            char lower = Character.toLowerCase(symbol);
+
+            for (int i = 0; i < RUSSIAN_LETTERS_COUNT; i++) {
+
+                if (alphabet[i] == lower) {
+
+                    int newIndex = Math.floorMod(
+                            i + key,
+                            RUSSIAN_LETTERS_COUNT
+                    );
+
+                    return Character.toUpperCase(alphabet[newIndex]);
+                }
+            }
+        }
+
+        for (int i = 0; i < alphabet.length; i++) {
+
+            if (alphabet[i] == symbol) {
+
+                int newIndex = Math.floorMod(
+                        i + key,
+                        alphabet.length
+                );
+
+                return alphabet[newIndex];
+            }
+        }
+
+        return symbol;
     }
 }
