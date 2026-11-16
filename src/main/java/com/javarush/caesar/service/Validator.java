@@ -1,6 +1,7 @@
 package com.javarush.caesar.service;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.javarush.caesar.exception.CipherException;
 
 public class Validator {
 
@@ -8,21 +9,21 @@ public class Validator {
         return key >= 0 && key < 43;
     }
 
-
-    public int parseKey(String input) {
+    public int parseKey(String input) throws CipherException {
         try {
             int parsedKey = Integer.parseInt(input);
 
             if (!isValidKey(parsedKey)) {
-                throw new IllegalArgumentException("Ключ должен быть от 0 до 42");
+                throw new CipherException("Ключ должен быть от 0 до 42");
             }
 
             return parsedKey;
 
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Ключ должен быть целым числом", e);
+            throw new CipherException("Ключ должен быть целым числом", e);
         }
     }
+
 
     public boolean isValidInputFile(String path) {
         if (path == null || path.isBlank()) {
