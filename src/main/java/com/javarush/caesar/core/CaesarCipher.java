@@ -1,5 +1,6 @@
-
 package com.javarush.caesar.core;
+
+import com.javarush.caesar.exception.CipherException;
 
 public class CaesarCipher {
 
@@ -10,9 +11,7 @@ public class CaesarCipher {
 
     public CaesarCipher(char[] alphabet) {
         if (alphabet == null || alphabet.length != ALPHABET_SIZE) {
-            throw new IllegalArgumentException(
-                    "Алфавит должен содержать 43 символа"
-            );
+            throw new IllegalArgumentException("Алфавит должен содержать 43 символа");
         }
 
         this.alphabet = alphabet.clone();
@@ -20,9 +19,7 @@ public class CaesarCipher {
         for (int i = 0; i < this.alphabet.length; i++) {
             for (int j = 0; j < i; j++) {
                 if (this.alphabet[i] == this.alphabet[j]) {
-                    throw new IllegalArgumentException(
-                            "Алфавит содержит повторяющиеся символы"
-                    );
+                    throw new IllegalArgumentException("Алфавит содержит повторяющиеся символы");
                 }
             }
         }
@@ -33,63 +30,87 @@ public class CaesarCipher {
     }
 
     public String encrypt(String text, int key) {
-        return shift(text, key);
-    }
-
-    public String decrypt(String text, int key) {
-        return shift(text, -(long) key);
-    }
-
-    private String shift(String text, long key) {
         if (text == null) {
-            throw new IllegalArgumentException(
-                    "Текст не должен быть null"
-            );
+            throw new IllegalArgumentException("Текст не должен быть null");
         }
 
         StringBuilder result = new StringBuilder(text.length());
-
         for (int i = 0; i < text.length(); i++) {
             char symbol = text.charAt(i);
-            result.append(shiftChar(symbol, key));
+            if (isSupported(symbol)) {
+                result.append(shiftChar(symbol, key));
+            }
         }
-
         return result.toString();
     }
 
+    public String decrypt(String encryptedText, int key) throws CipherException {
+        if (encryptedText == null) {
+            throw new CipherException("Зашифрованный текст не должен быть null");
+        }
+
+        StringBuilder result = new StringBuilder(encryptedText.length());
+        for (int i = 0; i < encryptedText.length(); i++) {
+            char symbol = encryptedText.charAt(i);
+            if (!isSupported(symbol)) {
+                throw new CipherException(
+                        "Недопустимый символ в зашифрованном тексте на позиции "
+                                + (i + 1) + ": " + describeSymbol(symbol)
+                );
+            }
+            result.append(shiftChar(symbol, -(long) key));
+        }
+        return result.toString();
+    }
+
+    private boolean isSupported(char symbol) {
+        if (symbol == '\r' || symbol == '\n') {
+            return true;
+        }
+        if (indexOf(symbol, alphabet.length) >= 0) {
+            return true;
+        }
+        if (Character.isUpperCase(symbol)) {
+            char lower = Character.toLowerCase(symbol);
+            return indexOf(lower, RUSSIAN_LETTERS_COUNT) >= 0;
+        }
+        return false;
+    }
+
     private char shiftChar(char symbol, long key) {
+        if (symbol == '\r' || symbol == '\n') {
+            return symbol;
+        }
 
         if (Character.isUpperCase(symbol)) {
-
-            char lower = Character.toLowerCase(symbol);
-
-            for (int i = 0; i < RUSSIAN_LETTERS_COUNT; i++) {
-
-                if (alphabet[i] == lower) {
-
-                    int newIndex = Math.floorMod(
-                            i + key,
-                            RUSSIAN_LETTERS_COUNT
-                    );
-
-                    return Character.toUpperCase(alphabet[newIndex]);
-                }
+            int index = indexOf(Character.toLowerCase(symbol), RUSSIAN_LETTERS_COUNT);
+            if (index >= 0) {
+                int newIndex = Math.floorMod(index + key, RUSSIAN_LETTERS_COUNT);
+                return Character.toUpperCase(alphabet[newIndex]);
             }
         }
 
-        for (int i = 0; i < alphabet.length; i++) {
-
-            if (alphabet[i] == symbol) {
-
-                int newIndex = Math.floorMod(
-                        i + key,
-                        alphabet.length
-                );
-
-                return alphabet[newIndex];
-            }
+        int index = indexOf(symbol, alphabet.length);
+        if (index >= 0) {
+            int newIndex = Math.floorMod(index + key, alphabet.length);
+            return alphabet[newIndex];
         }
-
         return symbol;
+    }
+
+    private int indexOf(char symbol, int length) {
+        for (int i = 0; i < length; i++) {
+            if (alphabet[i] == symbol) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private String describeSymbol(char symbol) {
+        if (Character.isISOControl(symbol) || Character.isSurrogate(symbol)) {
+            return String.format("U+%04X", (int) symbol);
+        }
+        return "'" + symbol + "'";
     }
 }

@@ -8,12 +8,11 @@ import com.javarush.caesar.exception.CipherException;
 import com.javarush.caesar.service.FileManager;
 import com.javarush.caesar.service.Validator;
 
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.Scanner;
 
 public class MainApp {
 
+    private static final int BRUTE_FORCE_SAMPLE_SIZE = 65_536;
     private final CaesarCipher cipher = new CaesarCipher(Alphabet.getSymbols());
     private final FileManager fileManager = new FileManager();
     private final BruteForce bruteForce = new BruteForce(cipher);
@@ -42,7 +41,7 @@ public class MainApp {
                     case "1" -> processFile(scanner, true);
                     case "2" -> processFile(scanner, false);
                     case "3" -> bruteForceFile(scanner);
-                    case "0" -> running = false;
+                    case "0", "exit" -> running = false;
                     default -> System.out.println("Неизвестный пункт меню");
                 }
 
@@ -52,12 +51,6 @@ public class MainApp {
             } catch (IllegalArgumentException e) {
                 System.err.println("Ошибка ввода: " + e.getMessage());
 
-            } catch (FileAlreadyExistsException e) {
-                System.err.println("Ошибка: файл " + e.getFile() + " уже существует.");
-                System.err.println("Укажите другое имя выходного файла.");
-
-            } catch (IOException e) {
-                System.err.println("Ошибка при работе с файлом: " + e.getMessage());
             }
         }
 
@@ -65,7 +58,7 @@ public class MainApp {
     }
 
     private void processFile(Scanner scanner, boolean encryptMode)
-            throws IOException, CipherException {
+            throws CipherException {
 
         System.out.print("Введите путь к исходному файлу: ");
         String inputPath = scanner.nextLine().trim();
@@ -79,16 +72,15 @@ public class MainApp {
 
         validateFilePaths(inputPath, outputPath);
 
-        String originalText = fileManager.readFile(inputPath);
-        String resultText;
+        String savedPath;
 
         if (encryptMode) {
-            resultText = cipher.encrypt(originalText, key);
+            savedPath = fileManager.transformFile(inputPath, outputPath,
+                    chunk -> cipher.encrypt(chunk, key));
         } else {
-            resultText = cipher.decrypt(originalText, key);
+            savedPath = fileManager.transformFile(inputPath, outputPath,
+                    chunk -> cipher.decrypt(chunk, key));
         }
-
-        String savedPath = fileManager.writeFile(outputPath, resultText);
 
         if (encryptMode) {
             System.out.println("Файл успешно зашифрован: " + savedPath);
@@ -97,7 +89,7 @@ public class MainApp {
         }
     }
 
-    private void bruteForceFile(Scanner scanner) throws IOException {
+    private void bruteForceFile(Scanner scanner) throws CipherException {
 
         System.out.print("Введите путь к зашифрованному файлу: ");
         String inputPath = scanner.nextLine().trim();
@@ -107,13 +99,13 @@ public class MainApp {
 
         validateFilePaths(inputPath, outputPath);
 
-        String encryptedText = fileManager.readFile(inputPath);
-        int foundKey = bruteForce.findKey(encryptedText);
+        String sample = fileManager.readSample(inputPath, BRUTE_FORCE_SAMPLE_SIZE);
+        int foundKey = bruteForce.findKey(sample);
 
         System.out.println("Наиболее вероятный ключ: " + foundKey);
 
-        String decryptedText = cipher.decrypt(encryptedText, foundKey);
-        String savedPath = fileManager.writeFile(outputPath, decryptedText);
+        String savedPath = fileManager.transformFile(inputPath, outputPath,
+                chunk -> cipher.decrypt(chunk, foundKey));
 
         System.out.println("Файл успешно расшифрован: " + savedPath);
     }

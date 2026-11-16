@@ -1,5 +1,7 @@
 package com.javarush.caesar.core;
 
+import com.javarush.caesar.exception.CipherException;
+
 public class BruteForce {
 
     private final CaesarCipher cipher;
@@ -8,7 +10,7 @@ public class BruteForce {
         this.cipher = cipher;
     }
 
-    public int findKey(String encryptedText) {
+    public int findKey(String encryptedText) throws CipherException {
         int bestKey = 0;
         int bestScore = Integer.MIN_VALUE;
 
